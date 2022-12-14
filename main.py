@@ -127,7 +127,7 @@ for album in albums:
         file['tracknumber'] = str(song_track_number + 1)
         file.save()
         file = ID3(filename)
-        file.add(APIC(mime='image/jpeg',type=3,desc=u'Cover',data=open(directory + album_name + '/cover.png','rb').read()))
+        file.add(APIC(mime='image/png',type=3,desc=u'Cover',data=open(directory + album_name + '/cover.png','rb').read()))
         # Read and add lyrics
         if (song_lyricUrl != None):
             sylt = lyric_file_to_text(directory + '/' + album_name + '/' + make_valid(song_name) + '.lrc')
