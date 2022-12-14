@@ -41,7 +41,10 @@ def lyric_file_to_text(filename):
 
 
 directory = './MonsterSiren/'
-shutil.rmtree(directory)
+try:
+    shutil.rmtree(directory)
+except:
+    pass
 try:
     os.mkdir(directory)
 except:
