@@ -3,7 +3,6 @@ import requests
 from tqdm import tqdm
 import pylrc
 import shutil
-import base64
 
 from mutagen.easyid3 import EasyID3
 from mutagen.id3 import APIC, SYLT, Encoding, ID3
