@@ -7,8 +7,7 @@ Download all songs, albums and fill out metadata, album, cover art, artists and 
 
 ### Note:
 
-The API offers .mp3 and .wav, but the program convert .wav to .mp3, which is lossy. If you care about the quality, I suggest convert .wav to .flac and fill metadata on .flac instead (since .wav can't do metadata). .flac use Vorbis instead of ID3 so filling metadata is a bit different.
-
+The API offers .mp3 and .wav, but the program convert .wav to .flac since .wav can't do metadata.
 
 ### Requirements:
 
