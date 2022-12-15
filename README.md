@@ -5,6 +5,11 @@ A simple script to download all your favorite Arknights OSTs from monster-siren.
 
 Download all songs, albums and fill out metadata, album, cover art, artists and even lyrics
 
+### Note:
+
+The API offers .mp3 and .wav, but the program convert .wav to .mp3, which is lossy. If you care about the quality, I suggest convert .wav to .flac and fill metadata on .flac instead (since .wav can't do metadata). .flac use Vorbis instead of ID3 so filling metadata is a bit different.
+
+
 ### Requirements:
 
 Python
