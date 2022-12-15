@@ -3,9 +3,11 @@ import requests
 from tqdm import tqdm
 import pylrc
 import shutil
+import base64
 
 from mutagen.easyid3 import EasyID3
 from mutagen.id3 import APIC, SYLT, Encoding, ID3
+from mutagen.flac import Picture, FLAC
 from pydub import AudioSegment
 from PIL import Image
 
@@ -63,18 +65,18 @@ for album in albums:
     album_url = 'https://monster-siren.hypergryph.com/api/album/' + album_cid + '/detail'
 
     try:
-        os.mkdir(directory + '/' + album_name)
+        os.mkdir(directory + album_name)
     except:
         pass
 
     # Download album art
-    with open(directory + '/' + album_name + '/cover.jpg', 'w+b') as f:
+    with open(directory + album_name + '/cover.jpg', 'w+b') as f:
         f.write(session.get(album_coverUrl).content)
 
     # Change album art from .jpg to .png
-    cover = Image.open(directory + '/' + album_name + '/cover.jpg')
-    cover.save(directory + '/' + album_name + '/cover.png')
-    os.remove(directory + '/' + album_name + '/cover.jpg')
+    cover = Image.open(directory + album_name + '/cover.jpg')
+    cover.save(directory + album_name + '/cover.png')
+    os.remove(directory + album_name + '/cover.jpg')
 
     songs = session.get(album_url, headers=headers).json()['data']['songs']
     for song_track_number, song in enumerate(songs):
@@ -87,9 +89,14 @@ for album in albums:
         song_detail = session.get(song_url, headers=headers).json()['data']
         song_lyricUrl = song_detail['lyricUrl']
         song_sourceUrl = song_detail['sourceUrl']
-        
-        source = session.get(song_sourceUrl, stream=True)
 
+        # Download lyric
+        if (song_lyricUrl != None):
+            with open(directory + album_name + '/' + make_valid(song_name) + '.lrc', 'w+b') as f:
+                f.write(session.get(song_lyricUrl).content)
+
+
+        source = session.get(song_sourceUrl, stream=True)
         filename = directory + album_name + '/' + make_valid(song_name)
         if source.headers['content-type'] == 'audio/mpeg':
             filename += '.mp3'
@@ -108,35 +115,58 @@ for album in albums:
             for data in source.iter_content(chunk_size = 1024):
                 size = f.write(data)
                 bar.update(size)
+
         if source.headers['content-type'] != 'audio/mpeg':
-            # If file is .wav then export to .mp3
-            AudioSegment.from_wav(filename).export(directory + album_name + '/' + make_valid(song_name) + '.mp3', format='mp3')
+            # If file is .wav then export to .flac
+            AudioSegment.from_wav(filename).export(directory + album_name + '/' + make_valid(song_name) + '.flac', format='flac')
             os.remove(filename)
-            filename = directory + album_name + '/' + make_valid(song_name) + '.mp3'
-
-
-        # Download lyric
-        if (song_lyricUrl != None):
-            with open(directory + '/' + album_name + '/' + make_valid(song_name) + '.lrc', 'w+b') as f:
-                f.write(session.get(song_lyricUrl).content)
+            filename = directory + album_name + '/' + make_valid(song_name) + '.flac'
 
 
         # Write metadata
-        file =  EasyID3(filename)
-        file['album'] = album_name
-        file['title'] = song_name
-        file['albumartist'] = ''.join(album_artistes)
-        file['artist'] = ''.join(song_artists)
-        file['tracknumber'] = str(song_track_number + 1)
-        file.save()
-        file = ID3(filename)
-        file.add(APIC(mime='image/png',type=3,desc=u'Cover',data=open(directory + album_name + '/cover.png','rb').read()))
-        # Read and add lyrics
-        if (song_lyricUrl != None):
-            sylt = lyric_file_to_text(directory + '/' + album_name + '/' + make_valid(song_name) + '.lrc')
-            file.setall("SYLT", [SYLT(encoding=Encoding.UTF8, lang='eng', format=2, type=1, text=sylt)])
+        if source.headers['content-type'] == 'audio/mpeg':
+            # Metadata for mp3 using ID3
+            file =  EasyID3(filename)
+            file['album'] = album_name
+            file['title'] = song_name
+            file['albumartist'] = ''.join(album_artistes)
+            file['artist'] = ''.join(song_artists)
+            file['tracknumber'] = str(song_track_number + 1)
+            file.save()
+            file = ID3(filename)
+            file.add(APIC(mime='image/png',type=3,desc=u'Cover',data=open(directory + album_name + '/cover.png','rb').read()))
+            # Read and add lyrics
+            if (song_lyricUrl != None):
+                sylt = lyric_file_to_text(directory + album_name + '/' + make_valid(song_name) + '.lrc')
+                file.setall("SYLT", [SYLT(encoding=Encoding.UTF8, lang='eng', format=2, type=1, text=sylt)])
+            file.save()
 
-        file.save()
+        else:
+            # Metadata for flac using Vorbis
+            file = FLAC(filename)
+            file['album'] = album_name
+            file['title'] = song_name
+            file['albumartist'] = ''.join(album_artistes)
+            file['artist'] = ''.join(song_artists)
+            file['tracknumber'] = str(song_track_number + 1)
+
+            image = Picture()
+            image.type = 3
+            image.desc = u'Cover'
+            image.mime = u"image/png"
+            with open(directory + album_name + '/cover.png','rb') as f:
+                image.data = f.read()
+            with Image.open(directory + album_name + '/cover.png') as imagePil:
+                image.width, image.height = imagePil.size
+                image.depth = 24
+            
+            file.add_picture(image)
+            
+            if (song_lyricUrl != None):
+                musiclrc = open(directory + album_name + '/' + make_valid(song_name) + '.lrc', "r").read()
+                file['lyrics'] = musiclrc
+
+            file.save()
     
 
 
