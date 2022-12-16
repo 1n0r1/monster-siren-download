@@ -26,7 +26,7 @@ def make_valid(filename):
     return f
 
 def lyric_file_to_text(filename):
-    lrc_file = open(filename, 'r')
+    lrc_file = open(filename, 'r', encoding='utf-8')
     lrc_string = ''.join(lrc_file.readlines())
     lrc_file.close()
 
@@ -162,7 +162,7 @@ for album in albums:
             file.add_picture(image)
             
             if (song_lyricUrl != None):
-                musiclrc = open(directory + album_name + '/' + make_valid(song_name) + '.lrc', "r").read()
+                musiclrc = open(directory + album_name + '/' + make_valid(song_name) + '.lrc', "r", encoding='utf-8').read()
                 file['lyrics'] = musiclrc
 
             file.save()
