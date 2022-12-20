@@ -16,8 +16,8 @@ jobs:
         python-version: 3.8
     - name: Install dependencies
       run: |
-        apt-get update
-        apt-get install -y ffmpeg
+        sudo apt-get update
+        sudo apt-get install -y ffmpeg
         pip3 install -r requirements.txt
     - name: Run script
       run: |
@@ -42,9 +42,11 @@ jobs:
         draft: false
         prerelease: false
     - name: Upload folder
-      uses: actions/upload-artifact@v2
-      with:
-        name: MonsterSiren
-        path: MonsterSiren
+      uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: MonsterSiren
+        asset_name: MonsterSiren.zip
+        mime_type: application/zip
