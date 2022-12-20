@@ -23,6 +23,7 @@ jobs:
       run: |
         mkdir MonsterSiren
         cd MonsterSiren
+        touch hi.txt
         zip -r ../MonsterSiren.zip .
         cd ..
     - name: Get current date
