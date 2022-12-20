@@ -1,0 +1,47 @@
+name: Run Python script and release folder
+
+on:
+  schedule:
+    - cron: '0 0 * * 1'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+    - name: Install dependencies
+      run: |
+        pip3 install -r requirements.txt
+    - name: Run script
+      run: |
+        python3 main.py
+    - name: Get current date
+      id: date
+      run: |
+        date=$(date '+%Y-%m-%d')
+        echo "::set-output name=date::$date"
+    - name: Set tag name
+      id: tag
+      run: |
+        tag_name="v1.0-${{ steps.date.outputs.date }}"
+        echo "::set-output name=tag_name::$tag_name"
+    - name: Create release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ steps.tag.outputs.tag_name }}
+        release_name: Release ${{ steps.date.outputs.date }}
+        draft: false
+        prerelease: false
+    - name: Upload folder
+      uses: actions/upload-artifact@v2
+      with:
+        name: MonsterSiren
+        path: MonsterSiren
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
