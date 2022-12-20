@@ -1,6 +1,7 @@
 name: Run Python script and release folder
 
 on:
+  push:
   schedule:
     - cron: '0 0 * * 1'
 
