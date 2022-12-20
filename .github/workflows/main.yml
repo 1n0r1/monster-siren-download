@@ -21,20 +21,24 @@ jobs:
         pip3 install -r requirements.txt
     - name: Run script and zip folder
       run: |
-        python3 main.py
+        mkdir MonsterSiren
         cd MonsterSiren
         zip -r ../MonsterSiren.zip .
         cd ..
+    - name: Get current date
+      id: current_date
+      run: echo ::set-output name=date::$(date '+%Y-%m-%d')
+
     - name: Create release
-      id: create_release
       uses: actions/create-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: v1.0
-        release_name: Release $(date '+%Y-%m-%d')
+        release_name: Release ${{ steps.current_date.outputs.date }}
         draft: false
         prerelease: false
+        
     - name: Upload folder
       uses: actions/upload-release-asset@v1
       env:
