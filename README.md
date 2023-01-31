@@ -15,11 +15,11 @@ Python
 
 ffmpeg
 
-```pip3 install -r requirements.txt```
+```pip3 install -r requirements.txt``` or ```pip install -r requirements.txt```
 
 ### Runs:
 
-```python3 main.py```
+```python3 main.py``` or ```python main.py```
 
 
 ![image](https://user-images.githubusercontent.com/80285371/207703442-a96488bc-5642-4d7b-92da-f0ac976e944b.png)
