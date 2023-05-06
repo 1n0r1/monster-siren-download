@@ -150,18 +150,18 @@ def download_album( args):
         return
 
     try:
-        os.mkdir(directory + album_name)
+        os.mkdir(directory + make_valid(album_name))
     except:
         pass
 
     # Download album art
-    with open(directory + album_name + '/cover.jpg', 'w+b') as f:
+    with open(directory + make_valid(album_name) + '/cover.jpg', 'w+b') as f:
         f.write(session.get(album_coverUrl).content)
 
     # Change album art from .jpg to .png
-    cover = Image.open(directory + album_name + '/cover.jpg')
-    cover.save(directory + album_name + '/cover.png')
-    os.remove(directory + album_name + '/cover.jpg')
+    cover = Image.open(directory + make_valid(album_name) + '/cover.jpg')
+    cover.save(directory + make_valid(album_name) + '/cover.png')
+    os.remove(directory + make_valid(album_name) + '/cover.jpg')
 
 
     songs = session.get(album_url, headers={'Accept': 'application/json'}).json()['data']['songs']
@@ -177,14 +177,14 @@ def download_album( args):
 
         # Download lyric
         if (song_lyricUrl != None):
-            songlyricpath = directory + album_name + '/' + make_valid(song_name) + '.lrc'
+            songlyricpath = directory + make_valid(album_name) + '/' + make_valid(song_name) + '.lrc'
             with open(songlyricpath, 'w+b') as f:
                 f.write(session.get(song_lyricUrl).content)
         else:
             songlyricpath = None
 
         # Download song and fill out metadata
-        filename, filetype = download_song(session=session, directory=directory + album_name, name=song_name, url=song_sourceUrl)
+        filename, filetype = download_song(session=session, directory=directory + make_valid(album_name), name=song_name, url=song_sourceUrl)
         fill_metadata(filename=filename,
                         filetype=filetype,
                         album=album_name,
@@ -192,7 +192,7 @@ def download_album( args):
                         albumartist=album_artistes,
                         artist=song_artists,
                         tracknumber=song_track_number,
-                        albumcover=directory + album_name + '/cover.png',
+                        albumcover=directory + make_valid(album_name) + '/cover.png',
                         songlyricpath=songlyricpath)
     
     # Mark album as finished
