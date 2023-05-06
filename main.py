@@ -23,6 +23,7 @@ def make_valid(filename):
     f = f.replace('|', '_')
     f = f.replace('?', '_')
     f = f.replace('*', '_')
+    f = f.replace(' ', '_')
     return f
 
 
