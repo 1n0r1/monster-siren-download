@@ -19,6 +19,8 @@ ffmpeg
 
 ### Runs:
 
+Make sure that you installed ffmpeg and can run `ffmpeg` in your terminal.
+
 ```python3 main.py``` or ```python main.py```
 
 ### Video instructions:
