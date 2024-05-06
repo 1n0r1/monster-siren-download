@@ -1,4 +1,5 @@
 import os
+import itertools
 import requests
 from tqdm import tqdm
 import pylrc
@@ -11,6 +12,10 @@ from mutagen.id3 import APIC, SYLT, Encoding, ID3
 from mutagen.flac import Picture, FLAC
 from pydub import AudioSegment
 
+#batch size of multiprocessing. reduce batch number for quicker termination when GUI is closed. 
+#But overhead time is massively increased. adjust this value to better suit your need. bigger number = faster = slower close time
+batch_size = 5
+progressTracker = 0
 
 def make_valid(filename):
     # Make a filename valid in different OSs
@@ -43,12 +48,12 @@ def update_downloaded_albums(queue, directory):
     while 1:
         album_name = queue.get()
         try:
-            with open(directory + 'completed_albums.json', 'r', encoding='utf8') as f:
+            with open(directory + '\\' + 'completed_albums.json', 'r', encoding='utf8') as f:
                 completed_albums = json.load(f)
         except:
             completed_albums = []
         completed_albums.append(album_name)
-        with open(directory + 'completed_albums.json', 'w+', encoding='utf8') as f:
+        with open(directory + '\\' + 'completed_albums.json', 'w+', encoding='utf8') as f:
             json.dump(completed_albums, f)
 
 
@@ -139,7 +144,7 @@ def download_album( args):
     album_url = 'https://monster-siren.hypergryph.com/api/album/' + album_cid + '/detail'
 
     try:
-        with open(directory + 'completed_albums.json', 'r', encoding='utf8') as f:
+        with open(directory + '\\' + 'completed_albums.json', 'r', encoding='utf8') as f:
             completed_albums = json.load(f)
     except:
         completed_albums = []
@@ -149,19 +154,20 @@ def download_album( args):
         print(f'Skipping downloaded album {album_name}')
         return
 
+    download2 = directory + '\\' + make_valid(album_name)
     try:
-        os.mkdir(directory + make_valid(album_name))
+        os.mkdir(download2)
     except:
         pass
 
     # Download album art
-    with open(directory + make_valid(album_name) + '/cover.jpg', 'w+b') as f:
+    with open(download2 + '/cover.jpg', 'w+b') as f:
         f.write(session.get(album_coverUrl).content)
 
     # Change album art from .jpg to .png
-    cover = Image.open(directory + make_valid(album_name) + '/cover.jpg')
-    cover.save(directory + make_valid(album_name) + '/cover.png')
-    os.remove(directory + make_valid(album_name) + '/cover.jpg')
+    cover = Image.open(download2 + '/cover.jpg')
+    cover.save(download2 + '/cover.png')
+    os.remove(download2 + '/cover.jpg')
 
 
     songs = session.get(album_url, headers={'Accept': 'application/json'}).json()['data']['songs']
@@ -177,14 +183,14 @@ def download_album( args):
 
         # Download lyric
         if (song_lyricUrl != None):
-            songlyricpath = directory + make_valid(album_name) + '/' + make_valid(song_name) + '.lrc'
+            songlyricpath = download2 + '/' + make_valid(song_name) + '.lrc'
             with open(songlyricpath, 'w+b') as f:
                 f.write(session.get(song_lyricUrl).content)
         else:
             songlyricpath = None
 
         # Download song and fill out metadata
-        filename, filetype = download_song(session=session, directory=directory + make_valid(album_name), name=song_name, url=song_sourceUrl)
+        filename, filetype = download_song(session=session, directory=download2, name=song_name, url=song_sourceUrl )
         fill_metadata(filename=filename,
                         filetype=filetype,
                         album=album_name,
@@ -192,43 +198,78 @@ def download_album( args):
                         albumartist=album_artistes,
                         artist=song_artists,
                         tracknumber=song_track_number,
-                        albumcover=directory + make_valid(album_name) + '/cover.png',
+                        albumcover=download2 + '/cover.png',
                         songlyricpath=songlyricpath)
     
     # Mark album as finished
     queue.put(album_name)
-
     return
 
-
-def main():
-    directory = './MonsterSiren/'
+def main(dir, progressbar, indicator):
+    global batch_size
     session = requests.Session()
     manager = Manager()
     queue = manager.Queue()
 
     try:
-        os.mkdir(directory)
+        os.mkdir(dir)
     except:
         pass
 
-    
     # Get all albums
     albums = session.get('https://monster-siren.hypergryph.com/api/albums', headers={'Accept': 'application/json'}).json()['data']
     for album in albums:
-        album['directory'] = directory
+        album['directory'] = dir
         album['session'] = session
         album['queue'] = queue
-
-
-    with Pool(maxtasksperchild=1) as pool:
-        pool.apply_async(update_downloaded_albums, (queue, directory))
-        pool.map(download_album, albums)
-        queue.put('kill')
     
+    with Pool(maxtasksperchild=1) as pool:
+        pool.apply_async(update_downloaded_albums, (queue, dir))
+        albums_iterator = iter(albums)
+        for each in albums_iterator:
+            result = pool.imap_unordered(download_album, itertools.islice(albums_iterator, batch_size))
+            try:
+                for _ in result:
+                    updateBar(progressbar, len(albums))
+            except KeyboardInterrupt:
+                queue.put('kill')
+                pool.terminate()
+                pool.join()
+                break
+            except Exception as e:
+                print('WARNING', e)
+                queue.put('kill')
+                pool.terminate()
+                pool.join()
+                break
+            
+        finish(progressbar, indicator)
+        queue.put('kill')
+
     return
 
+#update GUI progress bar
+def updateBar(widget, step):
+    try:
+        step = 100/step
+        global progressTracker
+        progressTracker += step
+        #now = int(-(-(widget.amountusedvar.get() + step)//1))#round up without using math.
+        widget.configure(amountused = int(progressTracker))
+    except:
+        pass
+    return
 
+#update GUI to finish
+def finish(bar, indicator):
+    try:
+        bar.configure(subtext = 'Finish!', bootstyle = 'success', subtextstyle = 'success', amountused = 100)
+        indicator.grid_forget()
+        global progressTracker
+        progressTracker = 0
+    except:
+        pass
+    return
 
 if __name__ == '__main__':
-    main()
+    main('./', None, None)
