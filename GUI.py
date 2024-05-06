@@ -76,6 +76,5 @@ class GUI(tb.Window):
         self.thread = thread
         return
 
-
 if __name__ == '__main__':
     ui = GUI()
