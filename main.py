@@ -7,6 +7,7 @@ import json
 
 from PIL import Image
 from multiprocessing import Pool, Manager
+import multiprocessing
 from mutagen.easyid3 import EasyID3
 from mutagen.id3 import APIC, SYLT, Encoding, ID3
 from mutagen.flac import Picture, FLAC
@@ -272,4 +273,5 @@ def finish(bar, indicator):
     return
 
 if __name__ == '__main__':
+    multiprocessing.freeze_support()
     main('./', None, None)

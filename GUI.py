@@ -3,6 +3,7 @@ import ttkbootstrap as tb
 from tkinter import filedialog
 from tkinter import *
 import threading
+import multiprocessing
 
 class GUI(tb.Window):
     def __init__(self):
@@ -77,4 +78,5 @@ class GUI(tb.Window):
         return
 
 if __name__ == '__main__':
+    multiprocessing.freeze_support()
     ui = GUI()
