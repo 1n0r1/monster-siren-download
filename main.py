@@ -98,7 +98,7 @@ def fill_metadata(filename, filetype, album, title, albumartist, artist, tracknu
 
     return 
 
-
+#To implement select download location, changed some directory naming.
 def download_song(session, directory, name, url):
     source = session.get(url, stream=True)
     filename = directory + '/' + make_valid(name)
@@ -224,6 +224,7 @@ def main(dir, progressbar, indicator):
         album['session'] = session
         album['queue'] = queue
     
+    #changed from map to imap_unsorted for better response of GUI progress bar.
     with Pool(maxtasksperchild=1) as pool:
         pool.apply_async(update_downloaded_albums, (queue, dir))
         albums_iterator = iter(albums)
