@@ -21,7 +21,8 @@ ffmpeg
 
 Make sure that you installed ffmpeg and can run `ffmpeg` in your terminal.
 
-```python3 main.py``` or ```python main.py```
+```python3 main.py``` or ```python main.py```  
+Or ```python GUI.py``` for gui version.
 
 ### Video instructions:
 https://drive.google.com/file/d/1Kzcn3GazpE9MHtzlkgJB3L0DtvsHK88M/view?usp=sharing
@@ -29,3 +30,4 @@ https://drive.google.com/file/d/1Kzcn3GazpE9MHtzlkgJB3L0DtvsHK88M/view?usp=shari
 
 ![image](https://user-images.githubusercontent.com/80285371/207703442-a96488bc-5642-4d7b-92da-f0ac976e944b.png)
 ![image](https://user-images.githubusercontent.com/80285371/207703484-2271b5a1-7928-401d-9bed-a5e4feeec4d0.png)
+<img width="513" alt="Untitled" src="https://github.com/xht8723/monster-siren-download/assets/15156436/df9503f2-7222-4b69-8a4f-8eb694a863d2">
