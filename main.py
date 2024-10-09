@@ -39,17 +39,22 @@ def lyric_file_to_text(filename):
         ret.append((text, time))
     return ret
 
-def update_downloaded_albums(queue, directory):
+def update_downloaded_albums(queue, directory, mutex):
     while 1:
         album_name = queue.get()
+        # Final queue element, guaranteed to happen after all maps completed
+        if album_name == None:
+            break
         try:
-            with open(directory + 'completed_albums.json', 'r', encoding='utf8') as f:
-                completed_albums = json.load(f)
+            with mutex:
+                with open(directory + 'completed_albums.json', 'r', encoding='utf8') as f:
+                    completed_albums = json.load(f)
         except:
             completed_albums = []
         completed_albums.append(album_name)
-        with open(directory + 'completed_albums.json', 'w+', encoding='utf8') as f:
-            json.dump(completed_albums, f)
+        with mutex:
+            with open(directory + 'completed_albums.json', 'w+', encoding='utf8') as f:
+                json.dump(completed_albums, f)
 
 
 def fill_metadata(filename, filetype, album, title, albumartist, artist, tracknumber, albumcover, songlyricpath):
@@ -131,6 +136,7 @@ def download_album( args):
     directory = args['directory']
     session = args['session']
     queue = args['queue']
+    mutex = args['mutex']
 
     album_cid = args['cid']
     album_name = args['name']
@@ -139,8 +145,9 @@ def download_album( args):
     album_url = 'https://monster-siren.hypergryph.com/api/album/' + album_cid + '/detail'
 
     try:
-        with open(directory + 'completed_albums.json', 'r', encoding='utf8') as f:
-            completed_albums = json.load(f)
+        with mutex:
+            with open(directory + 'completed_albums.json', 'r', encoding='utf8') as f:
+                completed_albums = json.load(f)
     except:
         completed_albums = []
 
@@ -206,6 +213,7 @@ def main():
     session = requests.Session()
     manager = Manager()
     queue = manager.Queue()
+    mutex = manager.Lock()
 
     try:
         os.mkdir(directory)
@@ -219,12 +227,15 @@ def main():
         album['directory'] = directory
         album['session'] = session
         album['queue'] = queue
+        album['mutex'] = mutex
 
 
     with Pool(maxtasksperchild=1) as pool:
-        pool.apply_async(update_downloaded_albums, (queue, directory))
+        pool.apply_async(update_downloaded_albums, (queue, directory, mutex))
         pool.map(download_album, albums)
-        queue.put('kill')
+        queue.put(None)
+        pool.close()
+        pool.join()
     
     return
 
